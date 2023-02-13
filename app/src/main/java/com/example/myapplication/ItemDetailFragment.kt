@@ -13,6 +13,7 @@ import android.widget.TextView
 import com.example.myapplication.databinding.FragmentItemDetailBinding
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import org.w3c.dom.Text
 import java.net.URL
 
 /**
@@ -32,6 +33,7 @@ class ItemDetailFragment : Fragment() {
     lateinit var readingScoreTextView: TextView
     lateinit var writingScoreTextView: TextView
     lateinit var mathScoreTextView: TextView
+    lateinit var schoolNameTextView : TextView
     private var toolbarLayout: CollapsingToolbarLayout? = null
 
     private var _binding: FragmentItemDetailBinding? = null
@@ -77,6 +79,7 @@ class ItemDetailFragment : Fragment() {
         readingScoreTextView = binding.satAverageReading
         writingScoreTextView = binding.satAverageWriting
         mathScoreTextView = binding.satAverageMath
+        schoolNameTextView = binding.titleSchoolName
 
         //updateContent() // Might be nice to have the page load wait for all the data to come down before loading, I've done spinners in while getting it as one option.
         rootView.setOnDragListener(dragListener)
@@ -85,9 +88,9 @@ class ItemDetailFragment : Fragment() {
     }
 
     private fun updateContent() {
-        toolbarLayout?.title = item?.school_name // Would probably rather have done this in the Relative Layout,
-        // but went with the Item Detail example as starting point and too much time to rip this out.
-        
+        toolbarLayout?.title = ""
+        schoolNameTextView.text = item?.school_name ?: "Unknown School"
+
         // Show the placeholder content as text in a TextView.
         item?.let {
             numStudentsTextView.text = it.num_of_sat_test_takers.toString()

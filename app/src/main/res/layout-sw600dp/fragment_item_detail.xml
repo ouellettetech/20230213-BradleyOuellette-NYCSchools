@@ -10,11 +10,26 @@
         android:layout_height="match_parent"
         tools:context="com.example.myapplication.ItemDetailFragment"
         >
+
+        <TextView
+            android:id="@+id/title_School_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            style="?android:attr/textAppearanceLarge"
+            android:text=""
+            android:paddingStart="@dimen/container_horizontal_margin"
+            android:paddingTop="16dp"
+            android:paddingEnd="@dimen/container_horizontal_margin"
+            android:paddingBottom="16dp"
+            android:textIsSelectable="true"
+            />
+
         <TextView
             android:id="@+id/title_num_testers"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
+            android:layout_below="@id/title_School_name"
             style="?android:attr/textAppearanceLarge"
             android:text="Number of SAT Takers: "
             android:paddingStart="@dimen/container_horizontal_margin"
@@ -28,7 +43,7 @@
             style="?android:attr/textAppearanceLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
+            android:layout_below="@id/title_School_name"
             android:layout_toEndOf="@id/title_num_testers"
             android:paddingStart="@dimen/container_horizontal_margin"
             android:paddingTop="16dp"
