@@ -1,6 +1,7 @@
 package com.example.myapplication
 
 import android.os.Bundle
+import android.os.Handler
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -86,35 +87,34 @@ class ItemListFragment : Fragment() {
         }
     }
 
-    private fun sendGet() { // Could retrieve this on launch earlier so its already there, but it loads really fast. Also would probably want to paginate this so we aren't loading all 400 at once.
+    // Given more time would move this to a Networking class, which is called from a Data model class to separate the View from the Model.
+    private fun sendGet(loop: Int = 0) { // Could retrieve this on launch earlier so its already there, but it loads really fast. Also would probably want to paginate this so we aren't loading all 400 at once.
         Thread(Runnable {
-            println("BRAD Getting Schools")
             val url = URL("https://data.cityofnewyork.us/resource/s3k6-pzi2.json?\$select=school_name,dbn")
 
             val json = try {
                 url.readText()
             } catch (e: Exception) {
+                if(loop<5) { // We want to retry the request if it fails. Given more time I would catch the different Exceptions and decide which to retry.
+                    // Given more time I also would have put a pull down to refresh if this is data that can change.
+                    Handler().postDelayed({
+                        sendGet(loop+1)
+                    }, 5000)
+                }
                 "[]"
             }
-            println("BRAD Parsing Data")
             var gson = Gson()
             val arraySchoolType = object : TypeToken<Array<School>>() {}.type
             var schools: Array<School> = gson.fromJson(json, arraySchoolType)
 
-            println("BRAD Updateing Schools")
             if(schools.size > 0 ){
                 mSchools.clear()
                 mSchools.addAll(schools.asList())
                 // try to touch View of UI thread
-                this@ItemListFragment.activity?.runOnUiThread(java.lang.Runnable {
-                    println("BRAD Forcing UI Update")
-                    println(" mSchool size : "+ mSchools.size)
+                this@ItemListFragment.activity?.runOnUiThread(java.lang.Runnable { // Run on UI thread to update the view.
                     mListAdapter?.updateData()
                 })
             }
-            println("BRAD Done Getting Data")
-
-
         }).start()
     }
 
