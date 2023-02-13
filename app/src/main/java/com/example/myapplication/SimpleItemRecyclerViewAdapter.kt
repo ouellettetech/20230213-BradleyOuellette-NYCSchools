@@ -15,7 +15,7 @@ import com.example.myapplication.databinding.ItemListContentBinding
 import com.example.myapplication.placeholder.PlaceholderContent
 
 class SimpleItemRecyclerViewAdapter(
-    private val values: List<PlaceholderContent.PlaceholderItem>,
+    private val values:  MutableList<School>,
     private val itemDetailFragmentContainer: View?
 ) :
     RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder>() {
@@ -30,8 +30,7 @@ class SimpleItemRecyclerViewAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = values[position]
-        holder.idView.text = item.id
-        holder.contentView.text = item.content
+        holder.contentView.text = item.school_name
 
         with(holder.itemView) {
             tag = item
@@ -56,7 +55,7 @@ class SimpleItemRecyclerViewAdapter(
                  * experience on larger screen devices
                  */
                 setOnContextClickListener { v ->
-                    val item = v.tag as PlaceholderContent.PlaceholderItem
+                    val item = v.tag as School
                     Toast.makeText(
                         v.context,
                         "Context click of item " + item.id,
@@ -99,8 +98,11 @@ class SimpleItemRecyclerViewAdapter(
 
     inner class ViewHolder(binding: ItemListContentBinding) :
         RecyclerView.ViewHolder(binding.root) {
-        val idView: TextView = binding.idText
         val contentView: TextView = binding.content
     }
 
+    fun updateData() {
+        println(" BRAD Data size: "+ values.size)
+        notifyDataSetChanged()
+    }
 }
