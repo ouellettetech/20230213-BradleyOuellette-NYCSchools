@@ -12,7 +12,6 @@ import android.widget.Toast
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.databinding.ItemListContentBinding
-import com.example.myapplication.placeholder.PlaceholderContent
 
 class SimpleItemRecyclerViewAdapter(
     private val values:  MutableList<School>,
@@ -35,11 +34,15 @@ class SimpleItemRecyclerViewAdapter(
         with(holder.itemView) {
             tag = item
             setOnClickListener { itemView ->
-                val item = itemView.tag as PlaceholderContent.PlaceholderItem
+                val schoolItem = itemView.tag as School
                 val bundle = Bundle()
                 bundle.putString(
-                    ItemDetailFragment.ARG_ITEM_ID,
-                    item.id
+                    ItemDetailFragment.ARG_SCHOOL_DBN,
+                    schoolItem.dbn
+                )
+                bundle.putString(
+                    ItemDetailFragment.ARG_SCHOOL_NAME,
+                    schoolItem.school_name
                 )
                 if (itemDetailFragmentContainer != null) {
                     itemDetailFragmentContainer.findNavController()
@@ -55,10 +58,10 @@ class SimpleItemRecyclerViewAdapter(
                  * experience on larger screen devices
                  */
                 setOnContextClickListener { v ->
-                    val item = v.tag as School
+                    val schoolItem = v.tag as School
                     Toast.makeText(
                         v.context,
-                        "Context click of item " + item.id,
+                        "Context click of item " + schoolItem.dbn,
                         Toast.LENGTH_LONG
                     ).show()
                     true
@@ -68,7 +71,7 @@ class SimpleItemRecyclerViewAdapter(
             setOnLongClickListener { v ->
                 // Setting the item id as the clip data so that the drop target is able to
                 // identify the id of the content
-                val clipItem = ClipData.Item(item.id)
+                val clipItem = ClipData.Item(item.dbn)
                 val dragData = ClipData(
                     v.tag as? CharSequence,
                     arrayOf(ClipDescription.MIMETYPE_TEXT_PLAIN),
@@ -83,6 +86,7 @@ class SimpleItemRecyclerViewAdapter(
                         0
                     )
                 } else {
+                    @Suppress("DEPRECATION") // Ignoring since this is a Warning about using an old feature that only happens if running on an old OS.
                     v.startDrag(
                         dragData,
                         View.DragShadowBuilder(v),
@@ -102,7 +106,6 @@ class SimpleItemRecyclerViewAdapter(
     }
 
     fun updateData() {
-        println(" BRAD Data size: "+ values.size)
         notifyDataSetChanged()
     }
 }

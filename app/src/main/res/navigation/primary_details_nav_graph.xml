@@ -16,7 +16,7 @@
     <fragment
         android:id="@+id/item_detail_fragment"
         android:name="com.example.myapplication.ItemDetailFragment"
-        android:label="item_detail"
+        android:label="SAT_details"
         tools:layout="@layout/fragment_item_detail">
         <argument
             android:name="item_id"

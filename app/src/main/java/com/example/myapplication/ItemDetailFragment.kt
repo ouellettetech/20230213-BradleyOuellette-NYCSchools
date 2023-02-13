@@ -9,8 +9,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import com.example.myapplication.placeholder.PlaceholderContent
 import com.example.myapplication.databinding.FragmentItemDetailBinding
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import java.net.URL
 
 /**
  * A fragment representing a single Item detail screen.
@@ -23,9 +25,12 @@ class ItemDetailFragment : Fragment() {
     /**
      * The placeholder content this fragment is presenting.
      */
-    private var item: PlaceholderContent.PlaceholderItem? = null
+    private var item: SchoolSATInfo? = null
 
-    lateinit var itemDetailTextView: TextView
+    lateinit var numStudentsTextView: TextView
+    lateinit var readingScoreTextView: TextView
+    lateinit var writingScoreTextView: TextView
+    lateinit var mathScoreTextView: TextView
     private var toolbarLayout: CollapsingToolbarLayout? = null
 
     private var _binding: FragmentItemDetailBinding? = null
@@ -38,8 +43,7 @@ class ItemDetailFragment : Fragment() {
         if (event.action == DragEvent.ACTION_DROP) {
             val clipDataItem: ClipData.Item = event.clipData.getItemAt(0)
             val dragData = clipDataItem.text
-            item = PlaceholderContent.ITEM_MAP[dragData]
-            updateContent()
+            getSATValue(dragData.toString(),null)
         }
         true
     }
@@ -48,11 +52,12 @@ class ItemDetailFragment : Fragment() {
         super.onCreate(savedInstanceState)
 
         arguments?.let {
-            if (it.containsKey(ARG_ITEM_ID)) {
-                // Load the placeholder content specified by the fragment
-                // arguments. In a real-world scenario, use a Loader
-                // to load content from a content provider.
-                item = PlaceholderContent.ITEM_MAP[it.getString(ARG_ITEM_ID)]
+            if (it.containsKey(ARG_SCHOOL_DBN)) {
+                var schoolName: String? = null
+                if (it.containsKey(ARG_SCHOOL_NAME)) {
+                    schoolName = it.getString(ARG_SCHOOL_NAME)
+                }
+                getSATValue(it.getString(ARG_SCHOOL_DBN), schoolName)
             }
         }
     }
@@ -64,22 +69,28 @@ class ItemDetailFragment : Fragment() {
 
         _binding = FragmentItemDetailBinding.inflate(inflater, container, false)
         val rootView = binding.root
-
+        this.activity?.title = "Hello"
         toolbarLayout = binding.toolbarLayout
-        itemDetailTextView = binding.itemDetail
 
-        updateContent()
+        numStudentsTextView = binding.satTestTakers
+        readingScoreTextView = binding.satAverageReading
+        writingScoreTextView = binding.satAverageWriting
+        mathScoreTextView = binding.satAverageMath
+
+        //updateContent() // Might be nice to have the page load wait for all the data to come down before loading, I've done spinners in while getting it as one option.
         rootView.setOnDragListener(dragListener)
 
         return rootView
     }
 
     private fun updateContent() {
-        toolbarLayout?.title = item?.content
-
+        toolbarLayout?.title = item?.school_name
         // Show the placeholder content as text in a TextView.
         item?.let {
-            itemDetailTextView.text = it.details
+            numStudentsTextView.text = it.num_of_sat_test_takers.toString()
+            readingScoreTextView.text = it.sat_critical_reading_avg_score.toString()
+            writingScoreTextView.text = it.sat_writing_avg_score.toString()
+            mathScoreTextView.text = it.sat_math_avg_score.toString()
         }
     }
 
@@ -88,7 +99,55 @@ class ItemDetailFragment : Fragment() {
          * The fragment argument representing the item ID that this fragment
          * represents.
          */
-        const val ARG_ITEM_ID = "item_id"
+        const val ARG_SCHOOL_DBN = "school_dbn"
+        const val ARG_SCHOOL_NAME = "school_name"
+    }
+
+    private fun getSATValue(school_dbn: String?, school_name: String?){
+        if(school_dbn != null) {
+            sendGet(school_dbn, school_name)
+        }
+    }
+
+    private fun sendGet(school_dbn: String, school_name: String?) {
+        Thread(Runnable {
+            println("BRAD Getting SAT Values...")
+            val url = URL("https://data.cityofnewyork.us/resource/f9bf-2cp4.json?dbn=$school_dbn")
+
+            val json = try {
+                url.readText()
+            } catch (e: Exception) {
+                "[]"
+            }
+            println("BRAD Parsing SAT Data")
+            var gson = Gson()
+            val arraySchoolType = object : TypeToken<Array<SchoolSATInfo>>() {}.type
+            var satResults: Array<SchoolSATInfo> = gson.fromJson(json, arraySchoolType)
+            var satResult: SchoolSATInfo = SchoolSATInfo()
+            println("BRAD Updateing SAT Scores: " + satResults.size)
+            if(satResults.size == 1 ){
+                satResult = satResults[0]
+            } else {
+                println("BRAD invalid Schools returned Size: "+ satResults.size + " school name passed in: "+ school_name)
+                satResult.school_name = school_name?: "Unknown School"
+                if(satResults.size>0){
+                    //we got too many results, this means an issue with the request or the server.
+                }
+                if(satResults.size == 0){
+                    // We didn't get any results Show just the school name. and School Details.
+                }
+            }
+
+            this@ItemDetailFragment.activity?.runOnUiThread(java.lang.Runnable {
+                println("BRAD Forcing UI Update")
+                println(" school name : "+ satResult.school_name)
+                item = satResult
+                updateContent()
+            })
+            println("BRAD Done Getting Data")
+
+
+        }).start()
     }
 
     override fun onDestroyView() {
