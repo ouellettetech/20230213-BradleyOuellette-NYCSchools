@@ -10,10 +10,20 @@ import org.junit.Assert.*
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 class ExampleUnitTest {
+    val TestUnknownSchoolName = "Unknown School"
+    val TestExampleSchoolName = "My High School"
     @Test
     fun addition_isCorrect() {
         assertEquals(4, 2 + 2)
     }
 
+    @Test
+    fun toStringforSchool_isCorrect() {
 
+        var schoolInfo: SchoolSATInfo = SchoolSATInfo()
+
+        assertEquals(TestUnknownSchoolName,schoolInfo.toString())
+        schoolInfo.school_name = TestExampleSchoolName
+        assertEquals(TestExampleSchoolName, schoolInfo.school_name)
+    }
 }
