@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.Data
 
 data class School ( // School Details
     var dbn: String? = null, // The names match the API, we could change them to be more friendly, but then I would need to customize the JSON parser,

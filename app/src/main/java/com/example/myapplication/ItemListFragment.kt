@@ -1,7 +1,6 @@
 package com.example.myapplication
 
 import android.os.Bundle
-import android.os.Handler
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -10,10 +9,11 @@ import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplication.Data.NetworkConnection
+import com.example.myapplication.Data.School
 import com.example.myapplication.databinding.FragmentItemListBinding
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import java.net.URL
 import kotlin.collections.ArrayList
 
 /**
@@ -87,35 +87,24 @@ class ItemListFragment : Fragment() {
         }
     }
 
-    // Given more time would move this to a Networking class, which is called from a Data model class to separate the View from the Model.
-    private fun sendGet(loop: Int = 0) { // Could retrieve this on launch earlier so its already there, but it loads really fast. Also would probably want to paginate this so we aren't loading all 400 at once.
-        Thread(Runnable {
-            val url = URL("https://data.cityofnewyork.us/resource/s3k6-pzi2.json?\$select=school_name,dbn")
+    private fun convertJSONtoSchoolAndUpdateContent(json: String){
+        var gson = Gson()
+        val arraySchoolType = object : TypeToken<Array<School>>() {}.type
+        var schools: Array<School> = gson.fromJson(json, arraySchoolType)
 
-            val json = try {
-                url.readText()
-            } catch (e: Exception) {
-                if(loop<5) { // We want to retry the request if it fails. Given more time I would catch the different Exceptions and decide which to retry.
-                    // Given more time I also would have put a pull down to refresh if this is data that can change.
-                    Handler().postDelayed({
-                        sendGet(loop+1)
-                    }, 5000)
-                }
-                "[]"
-            }
-            var gson = Gson()
-            val arraySchoolType = object : TypeToken<Array<School>>() {}.type
-            var schools: Array<School> = gson.fromJson(json, arraySchoolType)
+        if(schools.size > 0 ){
+            mSchools.clear()
+            mSchools.addAll(schools.asList())
+            // try to touch View of UI thread
+            this@ItemListFragment.activity?.runOnUiThread(java.lang.Runnable { // Run on UI thread to update the view.
+                mListAdapter?.updateData()
+            })
+        }
+    }
 
-            if(schools.size > 0 ){
-                mSchools.clear()
-                mSchools.addAll(schools.asList())
-                // try to touch View of UI thread
-                this@ItemListFragment.activity?.runOnUiThread(java.lang.Runnable { // Run on UI thread to update the view.
-                    mListAdapter?.updateData()
-                })
-            }
-        }).start()
+    // Would normally move this into a general networking class but left here for simplicity for the example.
+    private fun sendGet() {
+        NetworkConnection.getSchoolListJSON( ::convertJSONtoSchoolAndUpdateContent)
     }
 
     private fun setupRecyclerView(

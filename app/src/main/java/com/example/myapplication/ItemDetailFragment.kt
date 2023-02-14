@@ -2,7 +2,6 @@ package com.example.myapplication
 
 import android.content.ClipData
 import android.os.Bundle
-import android.os.Handler
 import android.view.DragEvent
 import androidx.fragment.app.Fragment
 import com.google.android.material.appbar.CollapsingToolbarLayout
@@ -10,11 +9,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import com.example.myapplication.Data.NetworkConnection
+import com.example.myapplication.Data.SchoolSATInfo
 import com.example.myapplication.databinding.FragmentItemDetailBinding
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import org.w3c.dom.Text
-import java.net.URL
 
 /**
  * A fragment representing a single Item detail screen.
@@ -115,44 +114,33 @@ class ItemDetailFragment : Fragment() {
         }
     }
 
+    private fun convertJSONtoSATsAndUpdateContent(json: String) {
+        var gson = Gson()
+        val arraySchoolType = object : TypeToken<Array<SchoolSATInfo>>() {}.type
+        var satResults: Array<SchoolSATInfo> = gson.fromJson(json, arraySchoolType)
+        var satResult: SchoolSATInfo = SchoolSATInfo()
+        if(satResults.size == 1 ){
+            satResult = satResults[0]
+        } else {
+            satResult.school_name = "Unknown School"
+            if(satResults.size>1){
+                //we got too many results, this means an issue with the request or the server.
+                // Log this to the server. We may want to show the first result, or just an error and no result depending on the data.
+            }
+            if(satResults.size == 0){
+                // We didn't get any results Show just the school name. and School Details. If there is no data I'm displaying 0 for number of SAT's and avg scores of 0.
+            }
+        }
+
+        this@ItemDetailFragment.activity?.runOnUiThread(java.lang.Runnable { // Since this updated the UI we need to switch back to the UI thread.
+            item = satResult
+            updateContent()
+        })
+    }
+
     // Would normally move this into a general networking class but left here for simplicity for the example.
-    private fun sendGet(school_dbn: String, school_name: String?, loop: Int = 0) {
-        Thread(Runnable {
-            val url = URL("https://data.cityofnewyork.us/resource/f9bf-2cp4.json?dbn=$school_dbn") // should be a const at the top of the file for the base URL, and then construct the query,
-
-            val json = try {
-                url.readText()
-            } catch (e: Exception) {
-                if(loop<5) { // We want to retry the request if it fails. Given more time I would catch the different Exceptions and decide which to retry.
-                    // Given more time I also would have put a pull down to refresh if this is data that can change.
-                    Handler().postDelayed({
-                        sendGet(school_dbn, school_name, loop+1)
-                    }, 5000)
-                }
-                "[]"
-            }
-            var gson = Gson()
-            val arraySchoolType = object : TypeToken<Array<SchoolSATInfo>>() {}.type
-            var satResults: Array<SchoolSATInfo> = gson.fromJson(json, arraySchoolType)
-            var satResult: SchoolSATInfo = SchoolSATInfo()
-            if(satResults.size == 1 ){
-                satResult = satResults[0]
-            } else {
-                satResult.school_name = school_name?: "Unknown School"
-                if(satResults.size>1){
-                    //we got too many results, this means an issue with the request or the server.
-                    // Log this to the server. We may want to show the first result, or just an error and no result depending on the data.
-                }
-                if(satResults.size == 0){
-                    // We didn't get any results Show just the school name. and School Details. If there is no data I'm displaying 0 for number of SAT's and avg scores of 0.
-                }
-            }
-
-            this@ItemDetailFragment.activity?.runOnUiThread(java.lang.Runnable { // Since this updated the UI we need to switch back to the UI thread.
-                item = satResult
-                updateContent()
-            })
-        }).start()
+    private fun sendGet(school_dbn: String, school_name: String?) {
+        NetworkConnection.getSATValuesJSON(school_dbn, ::convertJSONtoSATsAndUpdateContent)
     }
 
     // probably should add save the current state not sure I'm going to get to because of time.

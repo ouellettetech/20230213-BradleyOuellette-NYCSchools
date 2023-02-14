@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import com.example.myapplication.Data.SchoolSATInfo
 import org.junit.Test
 
 import org.junit.Assert.*
