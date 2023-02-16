@@ -11,6 +11,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplication.Data.School
 import com.example.myapplication.databinding.ItemListContentBinding
 
 class SimpleItemRecyclerViewAdapter(

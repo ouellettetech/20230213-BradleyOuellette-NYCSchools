@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.Data
 
 data class SchoolSATInfo (
     var dbn: String? = null,

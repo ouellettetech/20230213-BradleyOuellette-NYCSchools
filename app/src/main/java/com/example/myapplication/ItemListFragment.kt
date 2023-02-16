@@ -1,7 +1,6 @@
 package com.example.myapplication
 
 import android.os.Bundle
-import android.os.Handler
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -10,11 +9,9 @@ import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplication.Data.SchoolDataSource
 import com.example.myapplication.databinding.FragmentItemListBinding
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import java.net.URL
-import kotlin.collections.ArrayList
+
 
 /**
  * A Fragment representing a list of Pings. This fragment
@@ -26,7 +23,6 @@ import kotlin.collections.ArrayList
  */
 
 class ItemListFragment : Fragment() {
-    val mSchools: MutableList<School> = ArrayList()
     var mRecyclerView: RecyclerView? = null
     var mListAdapter: SimpleItemRecyclerViewAdapter? = null
 
@@ -87,35 +83,10 @@ class ItemListFragment : Fragment() {
         }
     }
 
-    // Given more time would move this to a Networking class, which is called from a Data model class to separate the View from the Model.
-    private fun sendGet(loop: Int = 0) { // Could retrieve this on launch earlier so its already there, but it loads really fast. Also would probably want to paginate this so we aren't loading all 400 at once.
-        Thread(Runnable {
-            val url = URL("https://data.cityofnewyork.us/resource/s3k6-pzi2.json?\$select=school_name,dbn")
-
-            val json = try {
-                url.readText()
-            } catch (e: Exception) {
-                if(loop<5) { // We want to retry the request if it fails. Given more time I would catch the different Exceptions and decide which to retry.
-                    // Given more time I also would have put a pull down to refresh if this is data that can change.
-                    Handler().postDelayed({
-                        sendGet(loop+1)
-                    }, 5000)
-                }
-                "[]"
-            }
-            var gson = Gson()
-            val arraySchoolType = object : TypeToken<Array<School>>() {}.type
-            var schools: Array<School> = gson.fromJson(json, arraySchoolType)
-
-            if(schools.size > 0 ){
-                mSchools.clear()
-                mSchools.addAll(schools.asList())
-                // try to touch View of UI thread
-                this@ItemListFragment.activity?.runOnUiThread(java.lang.Runnable { // Run on UI thread to update the view.
-                    mListAdapter?.updateData()
-                })
-            }
-        }).start()
+    private fun updateDataAdapter(){
+        this@ItemListFragment.activity?.runOnUiThread(java.lang.Runnable { // Run on UI thread to update the view.
+            mListAdapter?.updateData()
+        })
     }
 
     private fun setupRecyclerView(
@@ -123,11 +94,10 @@ class ItemListFragment : Fragment() {
         itemDetailFragmentContainer: View?
     ) {
         mListAdapter = SimpleItemRecyclerViewAdapter(
-            mSchools, itemDetailFragmentContainer
+            SchoolDataSource.ITEMS, itemDetailFragmentContainer
         )
 
-        sendGet()
-
+        SchoolDataSource.setDataChangeListener(::updateDataAdapter)
 
         recyclerView.adapter = mListAdapter
     }
@@ -136,6 +106,7 @@ class ItemListFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        SchoolDataSource.removeDataChangeListener(::updateDataAdapter)
         _binding = null
     }
 }
