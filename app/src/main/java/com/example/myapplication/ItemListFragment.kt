@@ -11,10 +11,9 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.Data.NetworkConnection
 import com.example.myapplication.Data.School
+import com.example.myapplication.Data.SchoolDataSource
 import com.example.myapplication.databinding.FragmentItemListBinding
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import kotlin.collections.ArrayList
+
 
 /**
  * A Fragment representing a list of Pings. This fragment
@@ -26,7 +25,6 @@ import kotlin.collections.ArrayList
  */
 
 class ItemListFragment : Fragment() {
-    val mSchools: MutableList<School> = ArrayList()
     var mRecyclerView: RecyclerView? = null
     var mListAdapter: SimpleItemRecyclerViewAdapter? = null
 
@@ -87,24 +85,10 @@ class ItemListFragment : Fragment() {
         }
     }
 
-    private fun convertJSONtoSchoolAndUpdateContent(json: String){
-        var gson = Gson()
-        val arraySchoolType = object : TypeToken<Array<School>>() {}.type
-        var schools: Array<School> = gson.fromJson(json, arraySchoolType)
-
-        if(schools.size > 0 ){
-            mSchools.clear()
-            mSchools.addAll(schools.asList())
-            // try to touch View of UI thread
-            this@ItemListFragment.activity?.runOnUiThread(java.lang.Runnable { // Run on UI thread to update the view.
-                mListAdapter?.updateData()
-            })
-        }
-    }
-
-    // Would normally move this into a general networking class but left here for simplicity for the example.
-    private fun sendGet() {
-        NetworkConnection.getSchoolListJSON( ::convertJSONtoSchoolAndUpdateContent)
+    private fun updateDataAdapter(){
+        this@ItemListFragment.activity?.runOnUiThread(java.lang.Runnable { // Run on UI thread to update the view.
+            mListAdapter?.updateData()
+        })
     }
 
     private fun setupRecyclerView(
@@ -112,11 +96,10 @@ class ItemListFragment : Fragment() {
         itemDetailFragmentContainer: View?
     ) {
         mListAdapter = SimpleItemRecyclerViewAdapter(
-            mSchools, itemDetailFragmentContainer
+            SchoolDataSource.ITEMS, itemDetailFragmentContainer
         )
 
-        sendGet()
-
+        SchoolDataSource.setDataChangeListener(::updateDataAdapter)
 
         recyclerView.adapter = mListAdapter
     }
@@ -125,6 +108,7 @@ class ItemListFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        SchoolDataSource.removeDataChangeListener(::updateDataAdapter)
         _binding = null
     }
 }
