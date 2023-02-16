@@ -14,9 +14,9 @@ object SchoolDataSource {
     val ITEMS: MutableList<School> = ArrayList()
 
     /**
-     * A map of school SAT Info by database ID
+     * A map of school by database ID
      */
-    val ITEM_MAP: MutableMap<String, SchoolSATInfo> = HashMap()
+    val ITEM_MAP: MutableMap<String, School> = HashMap()
 
     var dataUpdateCallback: MutableList<KFunction0<Unit>> = ArrayList();
 
@@ -32,7 +32,12 @@ object SchoolDataSource {
         if(schools.size > 0 ){
             ITEMS.clear()
             ITEMS.addAll(schools.asList())
-            updateDataUsage();
+
+            ITEM_MAP.clear()
+            ITEMS.forEach{
+                it.dbn?.let { dbn -> ITEM_MAP[dbn] = it };
+            }
+            updateDataUsage()
         }
     }
 
@@ -53,14 +58,5 @@ object SchoolDataSource {
 
     public fun updateData(){
         NetworkConnection.getSchoolListJSON( ::convertJSONtoSchool)
-    }
-
-    private fun makeDetails(position: Int): String {
-        val builder = StringBuilder()
-        builder.append("Details about Item: ").append(position)
-        for (i in 0..position - 1) {
-            builder.append("\nMore details information here.")
-        }
-        return builder.toString()
     }
 }

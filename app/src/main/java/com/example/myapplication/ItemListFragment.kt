@@ -9,8 +9,6 @@ import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
-import com.example.myapplication.Data.NetworkConnection
-import com.example.myapplication.Data.School
 import com.example.myapplication.Data.SchoolDataSource
 import com.example.myapplication.databinding.FragmentItemListBinding
 
