@@ -19,16 +19,17 @@ object SchoolSATDataSource {
     init {
     }
 
-    private fun createJSONtoSATFunction(dbn: String): (String) -> Unit {
-        return {json: String ->
+    private fun convertJSONtoSATFunction(json: String) {
             var gson = Gson()
             val arraySchoolType = object : TypeToken<Array<SchoolSATInfo>>() {}.type
             var satResults: Array<SchoolSATInfo> = gson.fromJson(json, arraySchoolType)
-            var satResult: SchoolSATInfo = SchoolSATInfo()
             if(satResults.size == 1 ){
-                satResult = satResults[0]
+                val satResult = satResults[0]
+                satResult.dbn?.let {
+                    ITEM_MAP[it] = satResult;
+                    updateDataUsage(it)
+                }
             } else {
-                satResult.school_name = SchoolDataSource.ITEM_MAP[dbn]?.school_name
                 if(satResults.size>1){
                     //we got too many results, this means an issue with the request or the server.
                     // Log this to the server. We may want to show the first result, or just an error and no result depending on the data.
@@ -37,19 +38,18 @@ object SchoolSATDataSource {
                     // We didn't get any results Show just the school name. and School Details. If there is no data I'm displaying 0 for number of SAT's and avg scores of 0.
                 }
             }
-            ITEM_MAP[dbn] = satResult;
-            updateDataUsage(dbn)
-        }
-
     }
 
     public fun getSchoolSAT(dbn: String): SchoolSATInfo {
         ITEM_MAP[dbn]?.let { return it }
 
         NetworkConnection.getSATValuesJSON(dbn,
-            createJSONtoSATFunction(dbn) as KFunction1<String, Unit>
+            ::convertJSONtoSATFunction
         )
-        return ITEM_MAP[dbn] ?: SchoolSATInfo(dbn = dbn, school_name = SchoolDataSource.ITEM_MAP[dbn]?.school_name)
+        if(ITEM_MAP[dbn] == null){
+            println("Null Value in Item Map: "+dbn)
+        }
+        return ITEM_MAP[dbn] ?: SchoolSATInfo(dbn,0,0,0,0, SchoolDataSource.ITEM_MAP[dbn]?.school_name)
     }
 
     private fun updateDataUsage(dbn: String){

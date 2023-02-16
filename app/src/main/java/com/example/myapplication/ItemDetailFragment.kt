@@ -81,7 +81,7 @@ class ItemDetailFragment : Fragment() {
 
         //updateContent() // Might be nice to have the page load wait for all the data to come down before loading, I've done spinners in while getting it as one option.
         rootView.setOnDragListener(dragListener)
-
+        updateContent()
         return rootView
     }
 
